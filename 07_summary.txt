@@ -1,0 +1,19 @@
+                    PYTORCH
+                       │
+        ┌──────────────┼──────────────┐
+        ↓              ↓              ↓
+     Tensors        Autograd       torch.nn
+        │              │              │
+        └──────────────┼──────────────┘
+                       ↓
+                Dataset/DataLoader
+                       ↓
+                 Training Loop
+                       ↓
+                  Validation
+                       ↓
+                  Evaluation
+                       ↓
+                     CNN
+                       ↓
+               IMAGE CLASSIFICATION

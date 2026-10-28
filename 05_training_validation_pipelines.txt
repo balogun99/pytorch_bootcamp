@@ -1,0 +1,17 @@
+Complets pipeline
+
+Dataset
+   ↓
+DataLoader
+   ↓
+train_step()
+   ↓
+validate_step()
+   ↓
+Metrics
+   ↓
+Training History
+   ↓
+Best Model
+   ↓
+Final Test

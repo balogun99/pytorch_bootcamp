@@ -1,0 +1,119 @@
+Exercise 1 — Load ResNet18
+
+Write code that:
+
+Loads pretrained ResNet18.
+Prints the model.
+Prints model.fc.
+Prints the number of total parameters.
+
+Exercise 2 — Replace the Classifier
+
+Change:
+
+1000 classes
+
+to:
+
+10 classes
+
+using:
+
+nn.Linear()
+
+Exercise 3 — Freeze the Backbone
+
+Freeze all parameters except:
+
+model.fc
+
+Then calculate:
+
+Total parameters
+Trainable parameters
+
+Exercise 4 — Fine-Tune Layer 4
+
+Modify your model so that:
+
+layer4 → trainable
+fc → trainable
+everything else → frozen
+
+Use:
+
+layer4 learning rate = 0.0001
+fc learning rate = 0.001
+
+Exercise 5 — Compare
+
+Train:
+
+Model A
+CNN from Lesson 7
+
+versus:
+
+Model B
+ResNet18 feature extraction
+
+Record:
+
+Training time
+Training accuracy
+Validation accuracy
+Number of trainable parameters
+
+LESSON 8 FINAL PROJECT
+
+Build:
+
+pytorch_transfer_learning/
+│
+├── data/
+│
+├── models/
+│   └── resnet_model.py
+│
+├── engine/
+│   └── engine.py
+│
+├── evaluation/
+│   └── metrics.py
+│
+├── checkpoints/
+│
+├── plots/
+│
+├── train.py
+├── evaluate.py
+├── predict.py
+├── requirements.txt
+└── README.md
+
+The project should support:
+             CIFAR-10
+                │
+                ↓
+        Data preprocessing
+                │
+                ↓
+        ResNet18 pretrained
+                │
+                ↓
+       Replace ImageNet FC
+                │
+                ↓
+         Feature extraction
+                │
+                ↓
+            Evaluation
+                │
+                ↓
+          Fine-tuning
+                │
+                ↓
+       Final model checkpoint
+                │
+                ↓
+             Prediction

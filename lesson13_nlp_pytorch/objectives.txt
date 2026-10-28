@@ -1,0 +1,206 @@
+1. What is NLP?
+Natural Language Processing (NLP) is a branch of Artificial Intelligence that helps computers process, understand, and work with human language.
+
+Examples include:
+- Sentiment analysis — determining whether a review is positive or negative.
+- Spam detection — identifying unwanted messages.
+- Text classification — categorizing emails, news, or documents.
+- Machine translation — translating between languages.
+- Chatbots — processing questions and generating responses.
+
+For this lesson, we'll build a sentiment analysis model using PyTorch.
+
+Imagine a customer writes:
+"The product is excellent. I really love it!"
+
+Our model should predict Positive.
+
+But if the customer writes:
+"The product is terrible and disappointing."
+
+Our model should predict Negative.
+
+This is a binary text-classification problem, similar in concept to your earlier customer-churn classification project. The difference is that our input is text rather than a row of numerical customer features or an image.
+2. Our learning objectives
+By the end of this lesson, you'll understand how to:
+1. Clean and prepare text data.
+2. Convert words into numerical representations.
+3. Build a vocabulary and tokenize sentences.
+4. Create a PyTorch Dataset and DataLoader for text.
+5. Build a neural network with an embedding layer.
+6. Train and evaluate a sentiment classifier.
+7. Save a trained model and use it to predict new sentences.
+3. Understand the NLP workflow
+Your image-classification workflow looked like this:
+Image dataset
+
+CIFAR-10 images
+
+Image transformations
+
+Resize, normalize, augment
+
+ResNet-18
+
+Extract visual features and classify
+
+Predicted image class
+
+
+Our NLP workflow will be similar, but text requires an extra step: computers must convert words into numbers before a neural network can process them.
+Text dataset
+
+Customer reviews
+
+Tokenization and vocabulary
+
+Words → token IDs
+
+Embedding layer
+
+Token IDs → numerical vectors
+
+Neural network
+
+Learn sentiment patterns
+
+Prediction
+
+Positive or Negative
+
+
+
+texts = [
+    "I love this product",
+    "This is an excellent product",
+    "The service was wonderful",
+    "I am very happy with this purchase",
+    "The experience was amazing",
+    "This product works perfectly",
+    "I really like this item",
+    "The quality is fantastic",
+    "The delivery was excellent",
+    "I am satisfied with the service",
+    "This is a great experience",
+    "The product is very useful",
+    "I enjoyed using this product",
+    "The staff were very helpful",
+    "Everything worked perfectly",
+    "I highly recommend this product",
+    "This was a wonderful experience",
+    "The product exceeded my expectations",
+    "I am pleased with the results",
+    "The service is outstanding",
+
+    "I hate this product",
+    "This is a terrible product",
+    "The service was awful",
+    "I am very disappointed",
+    "The experience was horrible",
+    "This product does not work",
+    "I really dislike this item",
+    "The quality is poor",
+    "The delivery was terrible",
+    "I am unhappy with the service",
+    "This is a bad experience",
+    "The product is useless",
+    "I regret buying this product",
+    "The staff were unhelpful",
+    "Everything worked badly",
+    "I do not recommend this product",
+    "This was a disappointing experience",
+    "The product failed my expectations",
+    "I am dissatisfied with the results",
+    "The service is horrible",
+]
+
+# 1 = Positive, 0 = Negative
+labels = [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+]
+
+This dataset has 40 examples: 20 positive and 20 negative. It's intentionally small for learning the pipeline, not for building a production-quality sentiment model.
+Understand the labels
+Text	Label	Meaning
+I love this product	1	Positive
+The quality is fantastic	1	Positive
+I hate this product	0	Negative
+The quality is poor	0	Negative
+
+The labels are already numerical, but the sentences are not. That's our next challenge.
+
+6. Lesson 13.2 — Tokenization and vocabulary
+Consider this sentence:
+
+"I love this product"
+
+We can split it into tokens:
+sentence = "I love this product"tokens = sentence.lower().split()print(tokens)
+
+
+
+Output:
+['i', 'love', 'this', 'product']
+
+
+Tokenization is the process of breaking text into smaller units called tokens. Here, each token is a word.
+
+Next, we build a vocabulary that assigns each unique word a numerical ID.
+
+For example:
+Word	Token ID
+<PAD>	0
+<UNK>	1
+i	2
+love	3
+this	4
+product	5
+
+<PAD> is used to make sequences the same length, while <UNK> represents a word that is not in the vocabulary.
+
+The sentence becomes:
+"I love this product"
+        ↓
+[2, 3, 4, 5]
+
+
+This is important because PyTorch's neural network cannot directly process ordinary words as input.
+
+Lesson 13.4 — Vocabulary, Tensor Encoding, Dataset and DataLoader
+In this lesson, we'll connect the text data from Lesson 13.1 to the sentiment model we created in Lesson 13.3.
+
+By the end, you'll have a working data pipeline that turns sentences such as "I love this product" into numerical tensors that PyTorch can feed into a neural network.
+1. Understand the complete process
+Raw text
+
+"I love this product"
+
+Tokenization
+
+["i", "love", "this", "product"]
+
+Vocabulary lookup
+
+[2, 3, 4, 5]
+
+Padding
+
+[2, 3, 4, 5, 0, 0]
+
+PyTorch tensor
+
+A numerical sequence ready for the model
+
+
+We'll implement these steps in a reusable Python file.
+2. Create the vocabulary
+A vocabulary is a dictionary mapping each known word to an integer ID.
+
+We'll reserve two special tokens:
+- <PAD> → 0: fills shorter sentences so a batch has consistent dimensions.
+- <UNK> → 1: represents words not seen when the vocabulary was built.
+For our small dataset, we'll build the vocabulary from the training texts. 
+In a real project, it's important to build it from training data only to avoid leaking information from the validation or test set.

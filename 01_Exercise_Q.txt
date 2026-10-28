@@ -1,0 +1,48 @@
+## Exercise 1 — Build a Small Network
+Create:
+Input: 5 features
+       ↓
+Linear: 5 → 16
+       ↓
+ReLU
+       ↓
+Linear: 16 → 8
+       ↓
+ReLU
+       ↓
+Linear: 8 → 1
+use nn.Module
+
+## Ispect parameters
+for name, parameter in model.named_parameters():
+    print(name)
+    print(parameter.shape)
+## Count parameters - Calculate the total number of trainable parameters
+total_parameters = sum(
+    parameter.numel()
+    for parameter in model.parameters()
+    if parameter.requires_grad
+)
+
+print(total_parameters)
+## Activation Functions
+create tensors
+x = torch.tensor(
+    [-3., -2., -1., 0., 1., 2., 3.]
+)
+# Apply
+ReLU
+Sigmoid
+Tanh
+# Training Loop
+use make_classification, build a model with:
+10 input features
+64 neurons
+32 neurons
+1 output
+# Train it using:
+BCEWithLogitsLoss
+Adam
+100 epochs
+# Calculate Accuracy
+Accuracy

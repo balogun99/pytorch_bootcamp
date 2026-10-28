@@ -1,0 +1,42 @@
+pytorch_cifar10/
+│
+├── data/
+│
+├── models/
+│   └── cnn.py
+│
+├── engine/
+│   └── engine.py
+│
+├── evaluation/
+│   └── metrics.py
+│
+├── plots/
+│
+├── train.py
+├── evaluate.py
+├── predict.py
+│
+└── requirements.txt
+
+
+=> Training should contain:
+✓ Load CIFAR-10
+✓ Create DataLoaders
+✓ Build CNN
+✓ Train model
+✓ Validate model
+✓ Save best model
+
+=> Evaluation should contain:
+✓ Accuracy
+✓ Confusion matrix
+✓ Classification report
+✓ Per-class performance
+
+=> Prediction should contain:
+✓ Load saved model
+✓ Load an image
+✓ Preprocess image
+✓ Predict class
+✓ Display confidence

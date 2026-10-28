@@ -1,0 +1,45 @@
+# The vocabulary size and sample sentence will depend on the training split.
+# 6. Understand the most important parts
+# A. Why do we use torch.long for input IDs?
+# The embedding layer expects integer token IDs. Therefore, the input tensor uses torch.long, which is a 64-bit integer type.
+# input_ids = torch.tensor(    [2, 3, 4, 5, 0, 0],    dtype=torch.long,)
+
+
+
+# B. Why do we use torch.float32 for labels?
+# Our model returns one raw score per sentence, and we'll train it using nn.BCEWithLogitsLoss(). This loss expects floating-point targets such as 0.0 and 1.0.
+# label = torch.tensor(1.0, dtype=torch.float32)
+
+
+
+# C. Why do we pad sentences?
+# Our model processes a batch of sentences as a rectangular tensor. For example, with a maximum sequence length of 6:
+# Sentence	Encoded sequence
+# I love this product	[2, 3, 4, 5, 0, 0]
+# Quality is fantastic	[6, 7, 8, 0, 0, 0]
+
+# The 0s represent padding, not actual words. Our embedding model from Lesson 13.3 already ignores those padding tokens when calculating the average sentence representation.
+
+Tokenization: splitting sentences into tokens.
+
+
+
+Vocabulary: mapping words to integer IDs.
+
+
+
+Encoding: converting text into numerical tensors.
+
+
+
+Padding: making sequences compatible in a batch.
+
+
+
+Dataset: defining how individual examples are retrieved.
+
+
+
+DataLoader: supplying examples to the model in batches.
+
+One important detail: our vocabulary is built from training text only, and unseen words map to <UNK>. That's a good habit for preventing data leakage.

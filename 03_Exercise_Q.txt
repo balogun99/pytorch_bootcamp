@@ -1,0 +1,48 @@
+##### LESSON 3 CHALLENGE
+Build this architecture without copying the previous model:
+Input
+  ↓
+128 neurons
+  ↓
+BatchNorm
+  ↓
+ReLU
+  ↓
+Dropout 0.30
+  ↓
+64 neurons
+  ↓
+BatchNorm
+  ↓
+ReLU
+  ↓
+Dropout 0.20
+  ↓
+32 neurons
+  ↓
+ReLU
+  ↓
+1 output
+
+Then:
+Create the model.
+Create the loss function.
+Create the Adam optimizer.
+Train it.
+Evaluate it.
+Calculate accuracy.
+Save the model.
+
+For saving, use:
+torch.save(
+    model.state_dict(),
+    "model.pth"
+)
+
+And load it with:
+model.load_state_dict(
+    torch.load(
+        "model.pth",
+        weights_only=True
+    )
+)

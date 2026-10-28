@@ -1,0 +1,942 @@
+PyTorch Bootcamp — Lesson 10
+Advanced Training Techniques
+What you'll learn
+
+By the end of this lesson, you'll understand and implement:
+
+Learning-rate scheduling
+Warm-up training
+Gradient clipping
+Gradient accumulation
+Mixed-precision training
+AdamW optimizer
+Label smoothing
+Checkpointing and resume training
+Best-model tracking
+A complete advanced training pipeline
+
+We'll continue using CIFAR-10, so you don't have to download or learn another dataset.
+
+10.1 Why Advanced Training Techniques?
+
+So far, you've learned the basic training loop:
+
+for epoch in range(num_epochs):
+
+    model.train()
+
+    for images, labels in train_loader:
+
+        optimizer.zero_grad()
+
+        outputs = model(images)
+
+        loss = criterion(outputs, labels)
+
+        loss.backward()
+
+        optimizer.step()
+
+This works.
+
+But real-world deep-learning projects usually need more sophisticated training.
+
+For example:
+
+Dataset
+   ↓
+DataLoader
+   ↓
+Model
+   ↓
+Forward Pass
+   ↓
+Loss
+   ↓
+Backward Pass
+   ↓
+Gradient Management
+   ↓
+Optimizer
+   ↓
+Learning-Rate Scheduler
+   ↓
+Validation
+   ↓
+Checkpoint
+   ↓
+Early Stopping
+
+Lesson 10 is about making your training pipeline more stable, efficient, and production-ready.
+
+10.2 Learning-Rate Scheduling
+
+You've already encountered learning-rate scheduling in Lesson 9.
+
+Let's understand it more deeply.
+
+Suppose:
+
+optimizer = torch.optim.Adam(
+    model.parameters(),
+    lr=0.001
+)
+
+Your learning rate is:
+
+0.001
+
+The optimizer uses this value when updating the model.
+
+The problem is that the same learning rate isn't always optimal throughout training.
+
+For example:
+
+Epoch 1      LR = 0.001
+Epoch 2      LR = 0.001
+Epoch 3      LR = 0.001
+...
+Epoch 20     LR = 0.001
+
+This is called learning-rate scheduling.
+
+10.3 StepLR
+
+One simple scheduler is:
+scheduler = torch.optim.lr_scheduler.StepLR(
+    optimizer,
+    step_size=10,
+    gamma=0.1
+)
+
+Meaning:
+
+Every 10 epochs
+↓
+multiply learning rate by 0.1
+
+If we start with:
+
+0.001
+
+then:
+
+Epoch 1–10   → 0.001
+Epoch 11–20  → 0.0001
+Epoch 21–30  → 0.00001
+
+At the end of every epoch:
+
+scheduler.step()
+
+10.4 ReduceLROnPlateau
+
+Another useful scheduler is:
+
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode="min",
+    factor=0.5,
+    patience=3
+)
+
+This scheduler watches the validation loss.
+
+Suppose:
+
+Epoch 1 → 0.80
+Epoch 2 → 0.70
+Epoch 3 → 0.65
+Epoch 4 → 0.64
+Epoch 5 → 0.64
+Epoch 6 → 0.64
+Epoch 7 → 0.64
+
+The validation loss stopped improving.
+
+The scheduler reduces the learning rate.
+We then use:
+
+scheduler.step(val_loss)
+
+Notice the difference:
+
+StepLR:
+scheduler.step()
+
+versus:
+
+ReduceLROnPlateau:
+scheduler.step(val_loss)
+
+That's important.
+
+10.5 Checking the Current Learning Rate
+
+You can inspect the current learning rate:
+
+current_lr = optimizer.param_groups[0]["lr"]
+
+print(current_lr)
+
+For example:
+
+0.001
+
+After scheduling:
+
+0.0005
+
+This is extremely useful when debugging training.
+
+10.6 AdamW
+
+You've previously used:
+
+optimizer = torch.optim.Adam(
+    model.parameters(),
+    lr=0.001
+)
+
+Now we'll introduce:
+
+optimizer = torch.optim.AdamW(
+    model.parameters(),
+    lr=0.001,
+    weight_decay=1e-4
+)
+Adam vs AdamW
+
+Both are adaptive optimizers.
+
+AdamW separates weight decay from the gradient update in a way that generally makes weight decay behave more predictably.
+
+For many modern deep-learning applications, you'll frequently see:
+
+AdamW
+
+rather than:
+
+Adam
+
+So for future projects, it's worth becoming comfortable with it.
+
+10.7 Gradient Clipping
+
+Sometimes gradients can become extremely large.
+
+This is called:
+
+Exploding gradients
+
+For example:
+
+gradient = 0.3
+gradient = 0.8
+gradient = 4.2
+gradient = 17.5
+gradient = 103.8
+
+This can destabilize training.
+
+PyTorch allows us to clip gradients.
+
+After:
+
+loss.backward()
+
+we can write:
+
+torch.nn.utils.clip_grad_norm_(
+    model.parameters(),
+    max_norm=1.0
+)
+
+Then:
+
+optimizer.step()
+
+So:
+
+loss.backward()
+
+torch.nn.utils.clip_grad_norm_(
+    model.parameters(),
+    max_norm=1.0
+)
+
+optimizer.step()
+
+The idea is:
+
+Backward pass
+     ↓
+Calculate gradients
+     ↓
+Clip gradients
+     ↓
+Optimizer update
+10.8 Gradient Accumulation
+
+Now let's learn something particularly useful when working with limited RAM/VRAM.
+
+Suppose your computer can only handle:
+
+batch_size = 16
+
+But you want the model to behave approximately as though:
+
+batch_size = 64
+
+We can accumulate gradients.
+
+Instead of:
+
+16
+16
+16
+16
+↓
+update
+
+we accumulate:
+
+Batch 1 → gradient
+Batch 2 → gradient
+Batch 3 → gradient
+Batch 4 → gradient
+↓
+update model
+
+Example:
+
+accumulation_steps = 4
+
+optimizer.zero_grad()
+
+for step, (images, labels) in enumerate(train_loader):
+
+    outputs = model(images)
+
+    loss = criterion(outputs, labels)
+
+    loss = loss / accumulation_steps
+
+    loss.backward()
+
+    if (step + 1) % accumulation_steps == 0:
+
+        optimizer.step()
+
+        optimizer.zero_grad()
+
+Why divide the loss?
+
+loss = loss / accumulation_steps
+
+Because we're accumulating several gradient contributions.
+
+This helps keep the effective gradient scale consistent.
+
+10.9 Mixed Precision
+
+Modern GPUs can accelerate training using lower-precision arithmetic.
+
+Instead of calculating everything using:
+
+FP32
+
+we can use mixed precision involving:
+
+FP16 / BF16 + FP32
+
+The general idea:
+
+Some calculations → lower precision
+Some calculations → FP32
+
+This can provide:
+
+faster training
+lower memory usage
+larger effective batch sizes
+
+In modern PyTorch, you'll encounter:
+
+torch.amp.autocast
+
+and:
+
+torch.amp.GradScaler
+Important for your current machine
+
+You're training on an Intel Mac CPU, so mixed precision is not the main optimization we need for your current CIFAR-10 training.
+
+We're learning it because it is an important technique you'll use when working with CUDA GPUs or suitable accelerators.
+
+10.10 Label Smoothing
+
+Normally, if the correct class is:
+
+cat
+
+the target is effectively:
+
+cat = 1
+everything else = 0
+
+This is called a hard target.
+
+Label smoothing slightly softens the target distribution.
+
+Instead of:
+
+cat       = 1.0
+dog       = 0.0
+horse     = 0.0
+...
+
+we might have:
+
+cat       = 0.9
+dog       = 0.011
+horse     = 0.011
+...
+
+This can reduce overconfidence.
+
+PyTorch makes this very easy:
+
+criterion = nn.CrossEntropyLoss(
+    label_smoothing=0.1
+)
+
+For example:
+
+criterion = nn.CrossEntropyLoss(
+    label_smoothing=0.1
+)
+
+This is especially useful for classification models.
+
+10.11 Checkpointing
+
+Suppose training takes several hours.
+
+Then your computer crashes at:
+
+Epoch 37 / 50
+
+Without checkpointing:
+
+💀 Training lost
+
+With checkpointing:
+
+Epoch 37
+   ↓
+Save checkpoint
+   ↓
+Computer crashes
+   ↓
+Restart
+   ↓
+Load checkpoint
+   ↓
+Continue Epoch 38
+
+A checkpoint can contain:
+
+checkpoint = {
+    "epoch": epoch,
+    "model_state_dict": model.state_dict(),
+    "optimizer_state_dict": optimizer.state_dict(),
+    "scheduler_state_dict": scheduler.state_dict(),
+    "best_val_loss": best_val_loss
+}
+
+Save:
+
+torch.save(
+    checkpoint,
+    "checkpoint.pth"
+)
+10.12 Loading a Checkpoint
+
+Later:
+
+checkpoint = torch.load(
+    "checkpoint.pth",
+    map_location=device,
+    weights_only=False
+)
+
+Then:
+
+model.load_state_dict(
+    checkpoint["model_state_dict"]
+)
+
+Optimizer:
+
+optimizer.load_state_dict(
+    checkpoint["optimizer_state_dict"]
+)
+
+Scheduler:
+
+scheduler.load_state_dict(
+    checkpoint["scheduler_state_dict"]
+)
+
+And:
+
+start_epoch = checkpoint["epoch"] + 1
+
+Now training can continue.
+
+10.13 Best-Model Checkpoint
+
+We don't necessarily want the last model.
+
+We usually want the model with the best validation performance.
+
+For example:
+
+if val_loss < best_val_loss:
+
+    best_val_loss = val_loss
+
+    torch.save(
+        model.state_dict(),
+        "best_model.pth"
+    )
+
+This gives us:
+
+best_model.pth
+
+rather than blindly using the model from the final epoch.
+
+10.14 Advanced Training Architecture
+
+Our Lesson 10 training pipeline will look like this:
+
+                 CIFAR-10
+                    │
+                    ▼
+               DataLoader
+                    │
+                    ▼
+                  CNN
+                    │
+                    ▼
+              Forward Pass
+                    │
+                    ▼
+              CrossEntropy
+              + Label Smoothing
+                    │
+                    ▼
+             Backward Pass
+                    │
+                    ▼
+             Gradient Clipping
+                    │
+                    ▼
+                 AdamW
+                    │
+                    ▼
+           Learning Rate Scheduler
+                    │
+                    ▼
+               Validation
+                    │
+          ┌─────────┴─────────┐
+          ▼                   ▼
+     Best Model          Checkpoint
+10.15 Complete Lesson 10 Training Loop
+
+Now let's combine the major techniques.
+
+import torch
+import torch.nn as nn
+from torch.optim import AdamW
+
+Define the loss:
+
+criterion = nn.CrossEntropyLoss(
+    label_smoothing=0.1
+)
+
+Optimizer:
+
+optimizer = AdamW(
+    model.parameters(),
+    lr=0.001,
+    weight_decay=1e-4
+)
+
+Scheduler:
+
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode="min",
+    factor=0.5,
+    patience=3
+)
+Training
+def train_one_epoch(
+    model,
+    dataloader,
+    criterion,
+    optimizer,
+    device
+):
+
+    model.train()
+
+    running_loss = 0.0
+    correct = 0
+    total = 0
+
+    for images, labels in dataloader:
+
+        images = images.to(device)
+        labels = labels.to(device)
+
+        optimizer.zero_grad()
+
+        outputs = model(images)
+
+        loss = criterion(outputs, labels)
+
+        loss.backward()
+
+        torch.nn.utils.clip_grad_norm_(
+            model.parameters(),
+            max_norm=1.0
+        )
+
+        optimizer.step()
+
+        running_loss += loss.item()
+
+        predictions = outputs.argmax(dim=1)
+
+        correct += (
+            predictions == labels
+        ).sum().item()
+
+        total += labels.size(0)
+
+    epoch_loss = running_loss / len(dataloader)
+
+    epoch_accuracy = correct / total
+
+    return epoch_loss, epoch_accuracy
+10.16 Validation Function
+def validate(
+    model,
+    dataloader,
+    criterion,
+    device
+):
+
+    model.eval()
+
+    running_loss = 0.0
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+
+        for images, labels in dataloader:
+
+            images = images.to(device)
+            labels = labels.to(device)
+
+            outputs = model(images)
+
+            loss = criterion(
+                outputs,
+                labels
+            )
+
+            running_loss += loss.item()
+
+            predictions = outputs.argmax(dim=1)
+
+            correct += (
+                predictions == labels
+            ).sum().item()
+
+            total += labels.size(0)
+
+    epoch_loss = running_loss / len(dataloader)
+
+    epoch_accuracy = correct / total
+
+    return epoch_loss, epoch_accuracy
+10.17 Advanced Training Loop
+
+Now:
+
+num_epochs = 30
+
+best_val_loss = float("inf")
+
+for epoch in range(num_epochs):
+
+    train_loss, train_acc = train_one_epoch(
+        model,
+        train_loader,
+        criterion,
+        optimizer,
+        device
+    )
+
+    val_loss, val_acc = validate(
+        model,
+        test_loader,
+        criterion,
+        device
+    )
+
+    scheduler.step(val_loss)
+
+    current_lr = optimizer.param_groups[0]["lr"]
+
+    print(
+        f"Epoch [{epoch+1}/{num_epochs}] "
+        f"Train Loss: {train_loss:.4f} "
+        f"Train Acc: {train_acc:.4f} "
+        f"Val Loss: {val_loss:.4f} "
+        f"Val Acc: {val_acc:.4f} "
+        f"LR: {current_lr:.6f}"
+    )
+
+    if val_loss < best_val_loss:
+
+        best_val_loss = val_loss
+
+        torch.save(
+            model.state_dict(),
+            "best_model.pth"
+        )
+
+        print("✓ Best model saved.")
+10.18 Understanding the Training Loop
+
+The important sequence is:
+
+1. model.train()
+       ↓
+2. Get batch
+       ↓
+3. Move data to device
+       ↓
+4. optimizer.zero_grad()
+       ↓
+5. Forward pass
+       ↓
+6. Calculate loss
+       ↓
+7. loss.backward()
+       ↓
+8. Clip gradients
+       ↓
+9. optimizer.step()
+       ↓
+10. Validation
+       ↓
+11. scheduler.step(val_loss)
+       ↓
+12. Save best model
+
+This is much closer to the kind of training pipeline you'll encounter in serious ML projects.
+
+10.19 Important: optimizer.zero_grad()
+
+Remember that PyTorch accumulates gradients.
+
+For example:
+
+loss.backward()
+
+doesn't automatically erase previous gradients.
+
+That's why we use:
+
+optimizer.zero_grad()
+
+before the next forward/backward cycle.
+
+Without it:
+
+Batch 1 gradient
+       +
+Batch 2 gradient
+       +
+Batch 3 gradient
+
+could accumulate unintentionally.
+
+10.20 Important: model.train() vs model.eval()
+
+Training:
+
+model.train()
+
+Validation:
+
+model.eval()
+
+Why?
+
+Because layers such as:
+
+Dropout
+BatchNorm
+
+behave differently during training and evaluation.
+
+So this distinction is essential.
+
+10.21 Advanced Training Checklist
+
+At this point you should understand:
+
+Optimizer
+AdamW(...)
+Loss
+CrossEntropyLoss(
+    label_smoothing=0.1
+)
+Gradient clipping
+torch.nn.utils.clip_grad_norm_(
+    model.parameters(),
+    max_norm=1.0
+)
+Scheduler
+ReduceLROnPlateau(...)
+Best model
+torch.save(
+    model.state_dict(),
+    "best_model.pth"
+)
+Evaluation
+model.eval()
+
+with torch.no_grad():
+    ...
+🧪 Lesson 10 Practical Project
+
+We'll now turn your CIFAR-10 CNN into an Advanced Training Pipeline.
+
+Project structure
+pytorch_lesson10/
+│
+├── data/
+│
+├── models/
+│   └── cnn.py
+│
+├── engine/
+│   └── engine.py
+│
+├── checkpoints/
+│   ├── best_model.pth
+│   └── latest_checkpoint.pth
+│
+├── plots/
+│   ├── loss_curve.png
+│   └── accuracy_curve.png
+│
+├── train.py
+├── evaluate.py
+├── predict.py
+├── requirements.txt
+└── README.md
+
+The key difference from Lesson 9 is that this project will have a more robust training engine capable of:
+
+✓ AdamW
+✓ Label smoothing
+✓ Gradient clipping
+✓ Learning-rate scheduling
+✓ Best-model saving
+✓ Full checkpointing
+✓ Resume training
+✓ Training history
+✓ Loss/accuracy curves
+🎯 Lesson 10 Challenge
+
+Before moving to the full project implementation, make sure you can explain these five lines:
+
+optimizer = AdamW(
+    model.parameters(),
+    lr=0.001,
+    weight_decay=1e-4
+)
+criterion = nn.CrossEntropyLoss(
+    label_smoothing=0.1
+)
+loss.backward()
+torch.nn.utils.clip_grad_norm_(
+    model.parameters(),
+    max_norm=1.0
+)
+scheduler.step(val_loss)
+
+If you understand those five pieces, you've crossed an important boundary from basic PyTorch training → advanced PyTorch training. 🔥
+
+Next practical step
+
+We'll build Lesson 10 Project — Advanced CIFAR-10 Training Pipeline from scratch, starting with:
+
+Step 1 → Create the project folder and environment structure
+Step 2 → Build cnn.py
+Step 3 → Build engine.py
+Step 4 → Build train.py
+Step 5 → Add checkpoint/resume training
+Step 6 → Plot training curves
+Step 7 → Evaluate the best model
+Step 8 → Make single-image predictions.
+
+
+Lesson 10 Project — Advanced CIFAR-10 Training Pipeline
+
+We are going to build:
+
+pytorch_lesson10/
+│
+├── data/
+├── models/
+│   └── cnn.py
+├── engine/
+│   └── engine.py
+├── checkpoints/
+├── plots/
+├── train.py
+├── evaluate.py
+├── predict.py
+├── requirements.txt
+└── README.md
+
+Our final pipeline will support:
+
+✅ CIFAR-10
+✅ Data augmentation
+✅ CNN
+✅ AdamW
+✅ Weight decay
+✅ Label smoothing
+✅ Gradient clipping
+✅ ReduceLROnPlateau
+✅ Early stopping
+✅ Best-model saving
+✅ Full checkpoint/resume training
+✅ Training curves
+✅ Evaluation
+✅ Single-image prediction

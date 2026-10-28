@@ -1,0 +1,76 @@
+production style pipeline
+Raw Dataset
+     ↓
+Dataset
+     ↓
+DataLoader
+     ↓
+Mini-batches
+     ↓
+Model
+     ↓
+Loss
+     ↓
+Backpropagation
+     ↓
+Optimizer
+
+we'll introduce
+1. Dataset
+2. TensorDataset
+3. DataLoader
+4. batch_size
+5. shuffle
+
+Complete Data pipeline
+                 Dataset
+                    │
+          ┌─────────┼─────────┐
+          ↓         ↓         ↓
+       Train       Val       Test
+          │         │         │
+          ↓         ↓         ↓
+    DataLoader DataLoader DataLoader
+          │         │         │
+       batches   batches   batches
+
+Complete Architecture => Updated Pytorch Training Model
+
+RAW DATA
+                 │
+                 ↓
+            Preprocessing
+                 │
+                 ↓
+             TensorDataset
+                 │
+        ┌────────┼────────┐
+        ↓        ↓        ↓
+      Train      Val      Test
+        │        │        │
+        ↓        ↓        ↓
+     DataLoader DataLoader DataLoader
+        │
+        ↓
+    Mini-batches
+        │
+        ↓
+     Neural Network
+        │
+        ↓
+    Predictions
+        │
+        ↓
+       Loss
+        │
+        ↓
+    backward()
+        │
+        ↓
+    Gradients
+        │
+        ↓
+ optimizer.step()
+        │
+        ↓
+ Updated Model

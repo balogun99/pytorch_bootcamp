@@ -1,0 +1,53 @@
+CNN Architecture
+
+A basic CNN might look like:
+
+Input Image
+     ↓
+Conv2D
+     ↓
+ReLU
+     ↓
+MaxPool
+     ↓
+Conv2D
+     ↓
+ReLU
+     ↓
+MaxPool
+     ↓
+Flatten
+     ↓
+Linear
+     ↓
+Output
+
+
+### Training Transform
+# train_transform = transforms.Compose([
+#     transforms.RandomHorizontalFlip(),
+#     transforms.ToTensor(),
+#     transforms.Normalize(
+#         mean=[0.4914, 0.4822, 0.4465],
+#         std=[0.2470, 0.2435, 0.2616]
+#     )
+# ])
+### Test Transform
+# test_transform = transforms.Compose([
+#     transforms.ToTensor(),
+#     transforms.Normalize(
+#         mean=[0.4914, 0.4822, 0.4465],
+#         std=[0.2470, 0.2435, 0.2616]
+#     )
+# ])
+# transform = transforms.Compose([
+#     transforms.RandomHorizontalFlip(),
+#     transforms.ToTensor(),
+#     transforms.Normalize(
+#         mean=[0.4914, 0.4822, 0.4465],
+#         std=[0.2470, 0.2435, 0.2616]
+#     )
+# ])
+### Image Transform
+CIFAR-10 images need to be converted into tensors.
+# transform = transforms.ToTensor()

@@ -1,0 +1,660 @@
+1. Learning Objectives
+
+By the end of this lesson, you should understand:
+
+What transfer learning is
+What pretrained models are
+Why pretrained models are useful
+ImageNet
+Feature extraction
+Freezing model parameters
+Unfreezing layers
+Fine-tuning
+torchvision.models
+ResNet
+ResNet architecture
+Pretrained weights
+Replacing a classifier
+Training a pretrained model
+Saving/loading a transfer-learning model
+When to use feature extraction vs fine-tuning
+
+Our practical model will be:
+
+ResNet18 with pretrained ImageNet weights
+
+2. What Is Transfer Learning?
+
+Transfer learning means:
+
+Taking knowledge learned from one task/dataset and applying it to another related task.
+
+Imagine a CNN has already spent a lot of time learning:
+
+Edges
+ ↓
+Textures
+ ↓
+Shapes
+ ↓
+Patterns
+ ↓
+Object parts
+ ↓
+Objects
+
+Instead of starting from random weights:
+
+Random weights
+     ↓
+Train from scratch
+     ↓
+Learn everything
+
+we start with:
+
+Pretrained model
+       ↓
+Already learned visual features
+       ↓
+Adapt to our dataset
+       ↓
+Train
+
+That's transfer learning.
+
+3. Why Is Transfer Learning Useful?
+
+Training a deep CNN from scratch can require:
+
+Large datasets
+Significant computation
+Long training times
+Careful architecture design
+
+Transfer learning can reduce these requirements.
+
+For example:
+
+From scratch:
+
+Random CNN
+   ↓
+100% of features must be learned
+
+versus:
+
+Transfer learning:
+
+Pretrained CNN
+   ↓
+Useful visual features already learned
+   ↓
+Only adapt the model to your task
+4. What Is a Pretrained Model?
+
+A pretrained model is a neural network that has already been trained on a dataset.
+
+For computer vision, a famous example is:
+
+ImageNet
+
+ImageNet contains a very large collection of labeled images spanning many object categories.
+
+Models trained on ImageNet can learn general visual representations.
+
+For example:
+
+Image
+ ↓
+Edges
+ ↓
+Textures
+ ↓
+Shapes
+ ↓
+Complex patterns
+
+Those learned features can often be reused for another image-classification problem.
+
+5. Transfer Learning Analogy
+
+Think about learning programming.
+
+Suppose you already know:
+
+Python
+Variables
+Functions
+Classes
+OOP
+NumPy
+Pandas
+
+Then you start learning:
+
+PyTorch
+
+You don't start your programming education from zero.
+
+You transfer your existing knowledge.
+
+CNN transfer learning works similarly.
+
+6. What Is ResNet?
+
+ResNet means:
+
+Residual Network
+
+It was introduced to make it easier to train very deep neural networks.
+
+Popular versions include:
+
+ResNet18
+ResNet34
+ResNet50
+ResNet101
+ResNet152
+
+The number indicates the approximate depth of the network.
+
+For our first transfer-learning exercise, we'll use:
+
+ResNet18
+
+because it is considerably lighter than the deeper versions and is a good starting point on your Intel Mac.
+
+7. Why ResNet?
+
+ResNet introduced an important concept called a:
+
+Residual connection
+
+Instead of forcing a block to learn:
+
+$$ H(x) $$
+
+the network can learn a residual:
+
+$$ F(x)=H(x)-x $$
+
+and then:
+
+$$ H(x)=F(x)+x $$
+
+The original input is effectively added back to the transformed representation.
+
+Conceptually:
+
+              ┌───────────────┐
+              │               │
+Input ────────┼───────────┐   │
+             ↓            │   │
+          Conv            │   │
+             ↓            │   │
+           ReLU           │   │
+             ↓            │   │
+          Conv            │   │
+             ↓            │   │
+             └────── + ←──┘
+                    │
+                    ↓
+                  Output
+This helps very deep networks train effectively.
+
+8. torchvision.models
+
+PyTorch's torchvision library provides many computer-vision models.
+
+For example:
+
+from torchvision import models
+
+Then we can access architectures such as:
+
+models.resnet18
+models.resnet34
+models.resnet50
+models.vgg16
+models.alexnet
+models.densenet121
+models.mobilenet_v3_small
+9. Loading a Pretrained ResNet18
+
+Modern torchvision uses the weights API.
+
+from torchvision.models import resnet18, ResNet18_Weights
+
+weights = ResNet18_Weights.DEFAULT
+
+model = resnet18(weights=weights)
+
+This tells PyTorch:
+
+Load ResNet18 with its pretrained weights.
+
+10. Why Use weights=?
+
+You may encounter older tutorials using:
+
+resnet18(pretrained=True)
+
+You may also encounter:
+
+resnet18(pretrained=False)
+
+The modern approach is:
+
+resnet18(
+    weights=ResNet18_Weights.DEFAULT
+)
+
+For new projects, prefer the current weights API.
+
+12. ResNet's Original Classifier
+
+The ImageNet-trained ResNet18 was designed for:
+
+1000 classes
+
+Therefore, its final layer is approximately:
+
+512 → 1000
+
+But suppose our dataset has 10 classes.
+
+We don't want:
+
+512 → 1000
+
+We want:
+
+512 → 10
+
+So we replace the classifier.
+
+13. Inspect model.fc
+
+Run:
+
+print(model.fc)
+
+You'll see something similar to:
+
+Linear(in_features=512, out_features=1000, bias=True)
+
+Therefore:
+
+Input features = 512
+Output classes = 1000
+
+14. Replace the Classifier
+
+For CIFAR-10:
+
+import torch.nn as nn
+
+model.fc = nn.Linear(
+    model.fc.in_features,
+    10
+)
+
+Now:
+
+ResNet18
+   ↓
+512 features
+   ↓
+Linear
+   ↓
+10 classes
+
+15. Important Concept: Freeze
+
+When doing transfer learning, we often don't want to immediately train the entire pretrained network.
+
+We can freeze its parameters.
+
+Freezing means:
+
+Don't update these parameters during backpropagation.
+
+We do this with:
+
+for parameter in model.parameters():
+    parameter.requires_grad = False
+
+Now the pretrained weights won't be updated.
+
+16. Then Unfreeze the Classifier
+
+After freezing everything:
+
+for parameter in model.fc.parameters():
+    parameter.requires_grad = True
+
+Now:
+
+ResNet backbone
+     ↓
+FROZEN
+
+Classifier
+     ↓
+TRAINABLE
+
+This is called:
+
+Feature extraction
+
+18. Feature Extraction Architecture
+
+Conceptually:
+
+             IMAGE
+               │
+               ↓
+      PRETRAINED RESNET
+               │
+        ┌──────┴──────┐
+        │             │
+     Conv layers   Residual blocks
+        │             │
+        └──────┬──────┘
+               ↓
+         Feature Vector
+               │
+               ↓
+       NEW CLASSIFIER
+               │
+               ↓
+          10 classes
+
+19. Fine-Tuning
+
+Another strategy is:
+
+Fine-tuning
+
+Instead of freezing the entire pretrained model, we allow some or all of the pretrained layers to update.
+
+For example:
+
+Early layers
+     ↓
+Frozen
+
+Later layers
+     ↓
+Trainable
+
+Classifier
+     ↓
+Trainable
+
+20. Feature Extraction vs Fine-Tuning
+
+| Feature Extraction                          | Fine-Tuning                           |
+| ------------------------------------------- | ------------------------------------- |
+| Most pretrained layers frozen               | Some/all layers trainable             |
+| Faster                                      | Slower                                |
+| Fewer trainable parameters                  | More trainable parameters             |
+| Lower computational cost                    | Higher computational cost             |
+| Useful with smaller datasets                | Useful when more adaptation is needed |
+| Less risk of destroying pretrained features | Greater adaptation to target dataset  |
+
+
+21. When Should We Fine-Tune?
+
+A common progression is:
+
+Start
+ ↓
+Freeze pretrained backbone
+ ↓
+Train new classifier
+ ↓
+Evaluate
+ ↓
+If necessary
+ ↓
+Unfreeze later layers
+ ↓
+Fine-tune with small learning rate
+
+This is a very useful practical workflow.
+
+22. Image Preprocessing
+
+There is an important issue.
+
+A pretrained ImageNet model was trained using particular preprocessing assumptions.
+
+The weights object provides the recommended preprocessing transforms.
+
+We can get them using:
+
+23. CIFAR-10 and ResNet Input Size
+
+CIFAR-10 images are:
+
+32 × 32
+
+while pretrained ImageNet models are generally used with larger images, commonly around:
+
+224 × 224
+
+Therefore, when using pretrained ResNet with CIFAR-10, we'll resize the images.
+
+For our practical exercise:
+
+from torchvision import transforms
+
+train_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    )
+])
+
+24. Why Normalize?
+
+The pretrained ResNet expects inputs normalized approximately using:
+
+Mean:
+[0.485, 0.456, 0.406]
+
+Std:
+[0.229, 0.224, 0.225]
+
+So we use:
+
+transforms.Normalize(
+    mean=[0.485, 0.456, 0.406],
+    std=[0.229, 0.224, 0.225]
+)
+
+This is important when using ImageNet pretrained weights.
+
+25. Training vs Testing Transforms
+
+We don't necessarily want random augmentation during testing.
+
+Training:
+
+train_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize(
+        [0.485, 0.456, 0.406],
+        [0.229, 0.224, 0.225]
+    )
+])
+
+Testing:
+
+test_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(
+        [0.485, 0.456, 0.406],
+        [0.229, 0.224, 0.225]
+    )
+])
+
+46. Fine-Tuning Workflow
+
+A practical workflow can be:
+             Pretrained ResNet
+                    │
+                    ↓
+              Freeze backbone
+                    │
+                    ↓
+             Replace classifier
+                    │
+                    ↓
+          Train classifier first
+                    │
+                    ↓
+                Evaluate
+                    │
+              ┌─────┴─────┐
+              │           │
+           Good        Needs work
+              │           │
+              ↓           ↓
+             Stop      Unfreeze
+                         layer4
+                           ↓
+                     Small LR
+                           ↓
+                       Fine-tune
+                           ↓
+                        Evaluate
+
+47. Freezing vs Unfreezing
+
+Remember this pattern:
+* Feature Extraction
+=> for parameter in model.parameters():
+    parameter.requires_grad = False
+
+model.fc = nn.Linear(
+    model.fc.in_features, # train only (fc)
+    10
+)
+
+* Fine-tuning
+=>  for parameter in model.parameters():
+    parameter.requires_grad = False
+
+for parameter in model.layer4.parameters(): # Note: Train only layer4 + fc
+    parameter.requires_grad = True
+
+for parameter in model.fc.parameters():
+    parameter.requires_grad = True
+
+48. Important: model.train() and model.eval()
+
+You learned this in previous lessons, but it becomes particularly important with pretrained CNNs.
+
+During training:
+
+model.train()
+
+During validation/inference:
+
+model.eval()
+
+Why?
+
+ResNet contains layers such as:
+
+Batch Normalization
+
+and training/evaluation behavior differs.
+
+So always maintain the correct mode.
+
+
+49. Important: torch.no_grad()
+
+During inference:
+
+with torch.no_grad():
+    logits = model(X)
+
+This prevents PyTorch from building the gradient graph.
+
+Benefits:
+
+Less memory
+Less computation
+Faster inference
+
+50. ResNet Transfer Learning Architecture
+
+             CIFAR-10 IMAGE
+                32×32×3
+                   │
+                   ↓
+             Resize 224×224
+                   │
+                   ↓
+          PRETRAINED RESNET18
+                   │
+       ┌───────────┴───────────┐
+       │                       │
+   Conv/BN/ReLU          Residual Blocks
+       │                       │
+       └───────────┬───────────┘
+                   ↓
+              Feature Vector
+                   │
+                   ↓
+            NEW Linear Layer
+                   │
+                   ↓
+                 10
+                   │
+                   ↓
+            CIFAR-10 Classes
+
+
+53. The Most Important Concepts
+
+You should now be comfortable with these terms:
+
+Pretrained model
+
+A model already trained on a large dataset.
+
+Transfer learning
+
+Reusing learned knowledge for a new task.
+
+Feature extraction
+
+Freeze the pretrained backbone and train a new classifier.
+
+Fine-tuning
+
+Allow some pretrained layers to update.
+
+Freezing
+
+Set:
+
+parameter.requires_grad = False
+
+Unfreezing
+
+Set:
+
+parameter.requires_grad = True
