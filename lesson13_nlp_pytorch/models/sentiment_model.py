@@ -15,7 +15,8 @@ class SentimentModel(nn.Module):
         padding_idx=0,
     ):
 
-        super.__init__()
+        super().__init__()
+
         self.embedding = nn.Embedding(
             num_embeddings=vocab_size,
             embedding_dim=embedding_dim,
@@ -43,4 +44,4 @@ class SentimentModel(nn.Module):
         sentence_embeddings = summed_embeddings / token_counts
 
         # Return one raw score (logit) per sentence
-        return self.classifier(sentence_embeddings).sequeeze(1)
+        return self.classifier(sentence_embeddings).squeeze(1)

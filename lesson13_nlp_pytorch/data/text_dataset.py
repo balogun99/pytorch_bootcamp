@@ -163,3 +163,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# python -m lesson13_nlp_pytorch.data.text_dataset

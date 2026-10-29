@@ -13,11 +13,11 @@ from lesson13_nlp_pytorch.data.text_dataset import (
     stratified_split
 )
 from lesson13_nlp_pytorch.models.sentiment_model import SentimentModel
-from pytorch_lesson10.train import CHECKPOINT_PATH, LEARNING_RATE
+# from pytorch_lesson10.train import CHECKPOINT_PATH, LEARNING_RATE
 
 # configuration
 RANDOM_SEED = 42
-EPOCHS = 10
+EPOCHS = 40
 LEARNING_RATE = 0.01
 EMBEDDING_DIM = 32
 
@@ -132,7 +132,7 @@ for epoch in range(EPOCHS):
         optimizer.zero_grad()
 
         # Backpropagation: calculate gradients.
-        loss.backwards()
+        loss.backward()
 
         # update model parameters
         optimizer.step()
@@ -239,3 +239,5 @@ print(f"Test loss: {test_loss:.4f}")
 print(f"Test accuracy: {test_accuracy:.2%}")
 print(f"Correct predictions: {test_correct}/{test_examples}")
 print("\nTraining completed successfully!")
+
+# python -m lesson13_nlp_pytorch.train.py
