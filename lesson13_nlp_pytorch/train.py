@@ -151,3 +151,91 @@ for epoch in range(EPOCHS):
 
         total_examples += batch_size
 
+    epoch_loss = total_loss / total_examples
+    epoch_accuracy = total_correct / total_examples
+
+    # Save the checkpoint with the lowest training loss.
+    # The held-out test set is not used to select it.
+    if epoch_loss < best_train_loss:
+        best_train_loss = epoch_loss
+
+        torch.save(
+            {
+                "model_state_dict": model.state_dict(),
+                "vocabulary": vocabulary,
+                "max_length": MAX_LENGTH,
+                "embedding_dim": EMBEDDING_DIM,
+                "pad_token": "<PAD>",
+                "unk_token": "<UNK>",
+                "best_train_loss": best_train_loss,
+                "epoch": epoch + 1,
+            },
+            CHECKPOINT_PATH,
+        )
+
+    # Print progress every five epochs and on the last.
+    if (epoch + 1) % 5 == 0 or epoch == 0 or epoch == EPOCHS - 1:
+        print(
+            f"Epoch [{epoch + 1:02d}/{EPOCHS}] "
+            f"| Loss: {epoch_loss:.4f} "
+            f"| Accuracy: {epoch_accuracy:.2%}"
+        )
+
+
+# --------------------------------------------------
+# 5. Load the saved checkpoint
+# --------------------------------------------------
+
+checkpoint = torch.load(
+    CHECKPOINT_PATH,
+    map_location=device,
+)
+
+model.load_state_dict(checkpoint["model_state_dict"])
+model.eval()
+
+print("\nBest checkpoint saved at:")
+print(CHECKPOINT_PATH)
+print("Checkpoint epoch:", checkpoint["epoch"])
+print("Best training loss:", f"{checkpoint['best_train_loss']:.4f}")
+
+
+# --------------------------------------------------
+# 6. Evaluate once on the held-out test set
+# --------------------------------------------------
+
+test_loss_total = 0.0
+test_correct = 0
+test_examples = 0
+
+with torch.no_grad():
+    for input_ids, batch_labels in test_loader:
+        input_ids = input_ids.to(device)
+        batch_labels = batch_labels.to(device)
+
+        logits = model(input_ids)
+        loss = criterion(logits, batch_labels)
+
+        batch_size = batch_labels.size(0)
+
+        test_loss_total += loss.item() * batch_size
+
+        probabilities = torch.sigmoid(logits)
+        predictions = (probabilities >= 0.5).float()
+
+        test_correct += (
+            predictions == batch_labels
+        ).sum().item()
+
+        test_examples += batch_size
+
+test_loss = test_loss_total / test_examples
+test_accuracy = test_correct / test_examples
+
+print("\n" + "=" * 50)
+print("FINAL TEST RESULTS")
+print("=" * 50)
+print(f"Test loss: {test_loss:.4f}")
+print(f"Test accuracy: {test_accuracy:.2%}")
+print(f"Correct predictions: {test_correct}/{test_examples}")
+print("\nTraining completed successfully!")
