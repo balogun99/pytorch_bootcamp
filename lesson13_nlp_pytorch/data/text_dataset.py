@@ -4,7 +4,10 @@ import random
 import torch
 
 from torch.utils.data import Dataset, DataLoader, Subset
-from lesson13_nlp_pytorch.data.sentiment_data import texts, labels
+if __package__:
+    from .sentiment_data import texts, labels
+else:
+    from sentiment_data import texts, labels
 
 PAD_TOKEN = "<PAD>"
 UNK_TOKEN = "<UNK>"
@@ -13,7 +16,7 @@ BATCH_SIZE = 4
 
 def tokenize(text):
     """Build a word-to-integer mapping from training text only."""
-    return re.findall(f"\b\w+\b", text.lower())
+    return re.findall(r"\b\w+\b", text.lower())
 
 def build_vocabulary(training_texts):
     """Build a word-to-integer mapping from training text only."""
