@@ -83,9 +83,11 @@ class SentimentDataset(Dataset):
 
         return input_ids, label
 
+
 def stratified_split(texts, labels, test_ratio=0.2, seed=42):
     """Split each class separately to preserve class proportions."""
     rng = random.Random(seed)
+
     train_indices = []
     test_indices = []
 
@@ -96,15 +98,20 @@ def stratified_split(texts, labels, test_ratio=0.2, seed=42):
         ]
 
         rng.shuffle(class_indices)
-        test_count = max(1, round(len(class_indices) * test_ratio))
+
+        test_count = max(
+            1,
+            round(len(class_indices) * test_ratio)
+        )
 
         test_indices.extend(class_indices[:test_count])
         train_indices.extend(class_indices[test_count:])
 
-        rng.shuffle(train_indices)
-        rng.shuffle(test_indices)
+    # These lines must be outside the for loop.
+    rng.shuffle(train_indices)
+    rng.shuffle(test_indices)
 
-        return train_indices, test_indices
+    return train_indices, test_indices
 
 def main():
     train_indices, test_indices = stratified_split(texts, labels)

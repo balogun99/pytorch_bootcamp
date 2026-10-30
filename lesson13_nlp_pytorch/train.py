@@ -241,3 +241,4 @@ print(f"Correct predictions: {test_correct}/{test_examples}")
 print("\nTraining completed successfully!")
 
 # python -m lesson13_nlp_pytorch.train.py
+# python -m lesson13_nlp_pytorch.train
