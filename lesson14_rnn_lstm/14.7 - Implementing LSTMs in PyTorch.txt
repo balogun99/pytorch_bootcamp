@@ -1,0 +1,77 @@
+Lesson 14.7 — Implementing LSTMs in PyTorch
+In the previous section, you successfully implemented a traditional RNN using nn.RNN().
+
+Now we'll implement a Long Short-Term Memory (LSTM) network using PyTorch's nn.LSTM().
+
+The key difference is that an LSTM has a more sophisticated memory mechanism that helps it learn long-term dependencies in sequential data.
+
+By the end of this lesson, you'll understand how to:
+1. Create an LSTM network using nn.LSTM().
+2. Understand the LSTM input and output dimensions.
+3. Initialize hidden and cell states.
+4. Extract the final hidden state and cell state.
+5. Build a reusable LSTM model using nn.Module.
+6. Compare the LSTM with a traditional RNN.
+
+14.7.1 — Understanding the LSTM architecture
+
+
+
+An LSTM has two important states:
+State	Symbol	Purpose
+Hidden state	\(h_t\)	Carries information used to produce outputs
+Cell state	\(c_t\)	Carries information through the sequence as long-term memory
+
+It also has three gates:
+- Forget gate: Determines what information should be removed from the cell state.
+- Input gate: Determines what new information should be stored.
+- Output gate: Determines what information should be exposed as the hidden state.
+Think of the cell state as a notebook where the network maintains useful information.
+
+The gates help it decide what to erase, what to write, and what to use.
+14.7.2 — Understanding nn.LSTM()
+PyTorch provides an LSTM implementation through:
+nn.LSTM()
+
+
+
+Its basic structure is:
+lstm = nn.LSTM(    input_size=5,    hidden_size=10,    num_layers=1,    batch_first=True)
+
+
+
+Let's understand the arguments.
+Argument	Meaning
+input_size	Number of features per time step
+hidden_size	Number of hidden units
+num_layers	Number of stacked LSTM layers
+batch_first=True	Input shape begins with batch size
+
+The most important thing to understand is that nn.LSTM() returns three things:
+output, (hidden_state, cell_state) = lstm(    input_data,    (initial_hidden_state, initial_cell_state))
+
+
+
+Notice that the hidden state and cell state are returned together as a tuple.
+14.7.3 — Understanding LSTM tensor dimensions
+We'll use the same dimensions as our RNN experiment so that we can compare both architectures fairly.
+
+Our input tensor will have this shape:
+\[
+[2,4,5]
+\]
+
+Dimension	Value	Meaning
+Batch size	2	Two sequences
+Sequence length	4	Four time steps
+Input size	5	Five features per time step
+
+We'll configure the LSTM with hidden_size=10.
+
+The expected output dimensions are:
+LSTM result	Expected shape
+Output	[2, 4, 10]
+Hidden state	[1, 2, 10]
+Cell state	[1, 2, 10]
+
+The hidden state and cell state have the same shape, but they serve different purposes.
