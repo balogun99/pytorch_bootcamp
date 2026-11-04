@@ -1,6 +1,3 @@
-
-# lesson13_nlp_pytorch/train.py
-
 import os
 import random
 
@@ -18,10 +15,7 @@ from lesson13_nlp_pytorch.data.text_dataset import (
 )
 from lesson13_nlp_pytorch.models.sentiment_model import SentimentModel
 
-
-# --------------------------------------------------
-# 1. CONFIGURATION
-# --------------------------------------------------
+# configuration
 
 RANDOM_SEED = 42
 
@@ -49,9 +43,7 @@ device = torch.device(
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
 
-# --------------------------------------------------
-# 2. CREATE TRAIN / VALIDATION / TEST SPLITS
-# --------------------------------------------------
+# create train/validation/tests splits
 
 # First, separate 20% of the data for final testing.
 train_val_indices, test_indices = stratified_split(
@@ -60,7 +52,6 @@ train_val_indices, test_indices = stratified_split(
     test_ratio=0.2,
     seed=RANDOM_SEED,
 )
-
 
 def stratified_train_val_split(
     indices,
@@ -109,9 +100,7 @@ train_indices, validation_indices = stratified_train_val_split(
     seed=RANDOM_SEED,
 )
 
-# --------------------------------------------------
-# CHECK CLASS DISTRIBUTION
-# --------------------------------------------------
+# check class distribution
 
 def show_class_distribution(name, indices):
 
@@ -160,10 +149,7 @@ train_dataset = Subset(dataset, train_indices)
 validation_dataset = Subset(dataset, validation_indices)
 test_dataset = Subset(dataset, test_indices)
 
-
-# --------------------------------------------------
-# 4. CREATE DATALOADERS
-# --------------------------------------------------
+# create dataloaders for training, validation, and testing
 
 train_loader = DataLoader(
     train_dataset,
