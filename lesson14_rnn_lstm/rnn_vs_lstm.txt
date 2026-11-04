@@ -1,0 +1,34 @@
+We've now implemented both nn.RNN() and nn.LSTM(). In this lesson, we'll put them side by side and investigate how they process exactly the same sequential data.
+Lesson 14.8 — RNN vs LSTM: Practical Comparison
+
+
+14.8.1 — What are we comparing?
+Both architectures process sequential data, but their internal memory mechanisms differ.
+Feature	RNN	LSTM
+Hidden state	Yes	Yes
+Cell state	No	Yes
+Gates	No	Forget, input, output
+Memory mechanism	Hidden state	Hidden and cell states
+Long-term dependencies	Can struggle	Designed to handle them better
+Computational complexity	Lower	Higher
+
+Our experiment: We'll give both networks identical input data, with the same input size, hidden size, batch size, and sequence length.
+
+We'll then compare their outputs and parameter counts.
+14.8.2 — Understanding the experiment
+We'll use these configurations:
+Parameter	Value
+Batch size	2
+Sequence length	6
+Input features	5
+Hidden size	10
+Number of layers	1
+
+The input tensor will have this shape:
+\[
+[2,6,5]
+\]
+
+Both networks will receive the same input tensor.
+
+However, they will have independently initialized weights, so their numerical outputs will differ.
