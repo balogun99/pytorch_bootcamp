@@ -1,0 +1,92 @@
+PyTorch Bootcamp — Lesson 15: GRU (Gated Recurrent Unit)
+
+Lesson objectives
+By the end of this lesson, you'll understand:
+1. What a GRU is and why it was developed.
+2. How GRU handles sequential information.
+3. The Update Gate and Reset Gate.
+4. How to implement GRU using torch.nn.GRU.
+5. How GRU differs from vanilla RNN and LSTM.
+6. How to build and train a GRU model.
+7. How to compare RNN, LSTM and GRU experimentally.
+1. What is GRU?
+GRU stands for Gated Recurrent Unit.
+
+It is a type of recurrent neural network architecture designed to learn dependencies in sequential data.
+
+It was introduced to address some limitations of traditional RNNs, particularly difficulties learning long-term dependencies.
+
+GRU is closely related to LSTM, but it uses a simpler gating mechanism.
+
+Think of it this way:
+- RNN: Processes sequential information using a hidden state.
+- LSTM: Uses gates and a separate cell state to control memory.
+- GRU: Uses gates to control information flow, but combines its memory and hidden state.
+2. Understanding GRU architecture
+GRU uses two main gates:
+
+A. Update Gate
+
+Determines how much information from the previous hidden state should be retained and how much new information should be incorporated.
+
+B. Reset Gate
+
+Determines how much previous information should be ignored when calculating new candidate information.
+
+How GRU processes information
+Previous hidden state
+
+(ht-1)
+
+
+Update gate
+(zt) Controls memory updates
+
+Reset gate
+(rt) Controls past information
+
+
+
+New candidate hidden state
+
+(ht)
+
+
+Updated hidden state
+
+(ht)
+
+3. Understanding the GRU equations
+The two gates use sigmoid activation, producing values between 0 and 1.
+- A value close to 0 means less information passes through.
+- A value close to 1 means more information passes through.
+The gates are calculated as:
+
+Update gate
+\[
+z_t=\sigma(W_zx_t+U_zh_{t-1}+b_z)
+\]
+
+Reset gate
+\[
+r_t=\sigma(W_rx_t+U_rh_{t-1}+b_r)
+\]
+
+The candidate hidden state is:
+\[
+\widetilde h_t=\tanh(W_nx_t+U_n(r_t\odot h_{t-1})+b_n)
+\]
+
+Finally, the hidden state is updated:
+\[
+h_t=(1-z_t)\odot\widetilde h_t+z_t\odot h_{t-1}
+\]
+
+Here:
+- \(x_t\): current input.
+- \(h_{t-1}\): previous hidden state.
+- \(\sigma\): sigmoid activation.
+- \(\tanh\): hyperbolic tangent.
+- \(\odot\): element-wise multiplication.
+- \(W,U,b\): learned weights and biases.
+These equations describe the gating idea. PyTorch's implementation has its own specific bias arrangement for the candidate state.
