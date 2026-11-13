@@ -90,3 +90,61 @@ Here:
 - \(\odot\): element-wise multiplication.
 - \(W,U,b\): learned weights and biases.
 These equations describe the gating idea. PyTorch's implementation has its own specific bias arrangement for the candidate state.
+
+
+Lesson 15.2 — Building a GRU Classifier
+We'll use a GRU to classify sequential data into one of several categories.
+
+For this exercise, we'll generate synthetic sequences with two classes. The GRU will learn to distinguish patterns in those sequences.
+1. Understand the GRU classifier
+Our architecture will look like this:
+Input sequence
+
+[Batch, Sequence Length, Features]
+Example: [8, 10, 5]
+
+GRU layer
+32 hidden units
+Learns sequential patterns
+
+Final hidden state
+
+[Batch, 32]
+
+
+Fully connected layer
+
+32 → 2
+
+
+Classification output
+
+Class 0 or Class 1
+
+
+The classifier uses the final hidden state to make its prediction.
+
+Lesson 15.3 — GRU vs LSTM
+Before building the training pipeline, let's understand how GRU compares with LSTM.
+
+LSTM
+- Three gates
+- Hidden state and cell state
+- More parameters
+
+GRU
+- Two gates
+- One hidden state
+- Fewer parameters
+
+
+Key differences
+Feature	LSTM	GRU
+Gates	3	2
+Cell state	Yes	No
+Hidden state	Yes	Yes
+Parameters	More	Fewer
+Architecture	More complex	Simpler
+Training speed	Can be slower	Often faster
+
+Neither architecture is universally better. Performance depends on the dataset, model configuration and training setup.
